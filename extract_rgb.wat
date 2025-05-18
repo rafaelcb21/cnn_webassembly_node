@@ -77,7 +77,6 @@
         ;; OR com Blue
         local.get $blue
         i32.or
-
     )
     (func $pad_image (param $wh_img i32) (param $wh_stride i32) (param $wh_kernel i32) (result i32 i32)
         (local $wh_padding i32)

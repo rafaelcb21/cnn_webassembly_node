@@ -210,6 +210,7 @@
 #
 #    return resultado
 
+
 def convolve_apply_kernel(imagem_real, height_real, width_real,
                                 kernel, kernel_h, kernel_w,
                                 pad_top, pad_bottom, pad_left, pad_right,
@@ -226,28 +227,45 @@ def convolve_apply_kernel(imagem_real, height_real, width_real,
     for i_out in range(out_h):
         linha_resultado = []
         i = i_out * stride_h
+        print('i = i_out * stride_h', i, i_out, stride_h)
         for j_out in range(out_w):
             j = j_out * stride_w
+            print('j = j_out * stride_w', j, j_out, stride_w)
             soma = 0
 
             for ki in range(kernel_h):
                 row = i + ki
+                print('row = i + ki', row, i, ki)
+                print('pad_top <= row < pad_top + height_real', pad_top, row, pad_top + height_real, pad_top <= row < pad_top + height_real)
                 if not (pad_top <= row < pad_top + height_real):
+                    print('continue top')
                     continue  # pula a linha do kernel fora da imagem
 
                 row_img = row - pad_top
+                print('row_img = row - pad_top', row_img, row, pad_top)
                 row_base = row_img * width_real
-
+                print('row_base = row_img * width_real', row_base, row_img, width_real)
                 for kj in range(kernel_w):
                     col = j + kj
+                    print('col = j + kj', col, j, kj)
+                    print('pad_left <= col < pad_left + width_real', pad_left, col, pad_left + width_real, pad_left <= col < pad_left + width_real)
                     if not (pad_left <= col < pad_left + width_real):
+                        print('continue left')
                         continue  # pula coluna fora da imagem
 
                     col_img = col - pad_left
+                    print('col_img = col - pad_left', col_img, col, pad_left)
                     idx = row_base + col_img
+                    print('idx = row_base + col_img', idx, row_base, col_img)
                     val = imagem_real[idx]
+                    print('val = imagem_real[idx]', val)
                     peso = kernel[ki * kernel_w + kj]
+                    print('peso = kernel[ki * kernel_w + kj]', peso, ki, kernel_w, kj, ki * kernel_w + kj, ' = ',kernel[ki * kernel_w + kj])
                     soma += val * peso
+                    print('soma += val * peso', soma, val, peso)
+                    print('-----------------------------------------')
+            print('soma final', soma)
+            print('====================================')
 
             linha_resultado.append(soma)
         resultado.append(linha_resultado)

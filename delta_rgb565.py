@@ -211,10 +211,11 @@
 #    return resultado
 
 
-def convolve_apply_kernel(imagem_real, height_real, width_real,
-                                kernel, kernel_h, kernel_w,
-                                pad_top, pad_bottom, pad_left, pad_right,
-                                stride_h, stride_w):
+def convolve_rgb(imagem_rgb, height_real, width_real,
+                 kernel_r, kernel_g, kernel_b,
+                 kernel_h, kernel_w,
+                 pad_top, pad_bottom, pad_left, pad_right,
+                 stride_h, stride_w):
 
     height_total = pad_top + height_real + pad_bottom
     width_total = pad_left + width_real + pad_right
@@ -227,71 +228,64 @@ def convolve_apply_kernel(imagem_real, height_real, width_real,
     for i_out in range(out_h):
         linha_resultado = []
         i = i_out * stride_h
-        print('i = i_out * stride_h', i, i_out, stride_h)
         for j_out in range(out_w):
             j = j_out * stride_w
-            print('j = j_out * stride_w', j, j_out, stride_w)
-            soma = 0
+
+            soma = 0  # resultado final da soma R + G + B
 
             for ki in range(kernel_h):
                 row = i + ki
-                print('row = i + ki', row, i, ki)
-                print('pad_top <= row < pad_top + height_real', pad_top, row, pad_top + height_real, pad_top <= row < pad_top + height_real)
                 if not (pad_top <= row < pad_top + height_real):
-                    print('continue top')
-                    continue  # pula a linha do kernel fora da imagem
+                    continue
 
                 row_img = row - pad_top
-                print('row_img = row - pad_top', row_img, row, pad_top)
                 row_base = row_img * width_real
-                print('row_base = row_img * width_real', row_base, row_img, width_real)
+
                 for kj in range(kernel_w):
                     col = j + kj
-                    print('col = j + kj', col, j, kj)
-                    print('pad_left <= col < pad_left + width_real', pad_left, col, pad_left + width_real, pad_left <= col < pad_left + width_real)
                     if not (pad_left <= col < pad_left + width_real):
-                        print('continue left')
-                        continue  # pula coluna fora da imagem
+                        continue
 
                     col_img = col - pad_left
-                    print('col_img = col - pad_left', col_img, col, pad_left)
                     idx = row_base + col_img
-                    print('idx = row_base + col_img', idx, row_base, col_img)
-                    val = imagem_real[idx]
-                    print('val = imagem_real[idx]', val)
-                    peso = kernel[ki * kernel_w + kj]
-                    print('peso = kernel[ki * kernel_w + kj]', peso, ki, kernel_w, kj, ki * kernel_w + kj, ' = ',kernel[ki * kernel_w + kj])
-                    soma += val * peso
-                    print('soma += val * peso', soma, val, peso)
-                    print('-----------------------------------------')
-            print('soma final', soma)
-            print('====================================')
+                    pixel = imagem_rgb[idx]  # pixel é uma tupla (R, G, B)
+
+                    # Aplicar os 3 kernels
+                    k_idx = ki * kernel_w + kj
+                    soma_r = pixel[0] * kernel_r[k_idx]
+                    soma_g = pixel[1] * kernel_g[k_idx]
+                    soma_b = pixel[2] * kernel_b[k_idx]
+
+                    soma += soma_r + soma_g + soma_b
 
             linha_resultado.append(soma)
         resultado.append(linha_resultado)
 
     return resultado
 
+
 # Imagem 4x4 (linearizada)
-imagem = [
-     1, 2, 3, 4, 
-     5, 6, 7, 8, 
-     9, 10, 11, 12, 
-     13, 14, 15, 16
+# Imagem 4x4 RGB
+imagem = [ 
+    (1, 5, 3), (5, 12, 7), (8, 20, 11), (12, 27, 15),
+    (16, 35, 18), (20, 42, 22), (23, 50, 26), (27, 57, 30),
+    (31, 60, 28), (26, 50, 23), (22, 42, 20), (18, 35, 16),
+    (15, 27, 12), (11, 20, 8), (7, 12, 5), (3, 5, 1)
 ]
 
-# Kernel 3×3: detector de borda simples
-kernel = [
-    2, -4,
-    1, 3
-]
+# Kernels para R, G e B
+kernel_r = [2, -4, 1, 3]
+kernel_g = [3, 2, 1, 4]
+kernel_b = [7, 2, 1, 5]
 
-# Aplicar convolução com padding = 1 (para manter tamanho), stride = 1
-saida = convolve_apply_kernel(
-    imagem_real = imagem,
+# Aplicar convolução com padding bottom/right = 1 (para evitar acesso inválido)
+saida = convolve_rgb(
+    imagem_rgb = imagem,
     height_real = 4,
     width_real = 4,
-    kernel = kernel,
+    kernel_r = kernel_r,
+    kernel_g = kernel_g,
+    kernel_b = kernel_b,
     kernel_h = 2,
     kernel_w = 2,
     pad_top = 0,
@@ -303,11 +297,13 @@ saida = convolve_apply_kernel(
 )
 
 # Mostrar resultado
-print("Resultado final da convolução:")
+print("Resultado final da convolução RGB somada:")
 for linha in saida:
     print(linha)
 
-#[17, 19, 21, 16]
-#[25, 27, 29, 28]
-#[33, 35, 37, 40]
-#[-30, -32, -34, 32]
+#resultado =[
+#    463, 608, 747, 324,
+#    823, 813, 802, 504,
+#    687, 532, 398, 262,
+#    207, 144, 85, 28
+#]

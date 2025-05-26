@@ -224,18 +224,21 @@ def convolve_rgb(imagem_rgb, height_real, width_real,
     out_w = ((width_total - kernel_w) // stride_w) + 1
 
     resultado = []
-
+    #print(out_h, height_total, kernel_h, stride_h, (height_total - kernel_h) // stride_h)
     for i_out in range(out_h):
         linha_resultado = []
         i = i_out * stride_h
+        print('>>> ',i, i_out, stride_h)
         for j_out in range(out_w):
             j = j_out * stride_w
 
             soma = 0  # resultado final da soma R + G + B
 
-            for ki in range(kernel_h):
+            for ki in range(kernel_h): # vai para o lado
                 row = i + ki
+                print(pad_top, row, pad_top + height_real, i, j, ki)
                 if not (pad_top <= row < pad_top + height_real):
+                    print('continue')
                     continue
 
                 row_img = row - pad_top
@@ -273,12 +276,34 @@ imagem = [
     (15, 27, 12), (11, 20, 8), (7, 12, 5), (3, 5, 1)
 ]
 
-# Kernels para R, G e B
-kernel_r = [2, -4, 1, 3]
-kernel_g = [3, 2, 1, 4]
-kernel_b = [7, 2, 1, 5]
+# Kernels para R, G e B 2x2
+#kernel_b = [7, 2, 1, 5]
+
+# Kernels para R, G e B 3x3
+kernel_r = [2, -4, 2, 1, 3, 7, 5 , 2 , 1]
+kernel_g = [3, 2, 4, 1, 4, 2, 9, 8, 5]
+kernel_b = [7, 2, 4, 1, 5, 7, 2, 3, 9]
 
 # Aplicar convolução com padding bottom/right = 1 (para evitar acesso inválido)
+# saida 2x2
+#saida = convolve_rgb(
+#    imagem_rgb = imagem,
+#    height_real = 4,
+#    width_real = 4,
+#    kernel_r = kernel_r,
+#    kernel_g = kernel_g,
+#    kernel_b = kernel_b,
+#    kernel_h = 2,
+#    kernel_w = 2,
+#    pad_top = 0,
+#    pad_bottom = 1,
+#    pad_left = 0,
+#    pad_right = 1,
+#    stride_h = 1,
+#    stride_w = 1
+#)
+
+# saida 3x3
 saida = convolve_rgb(
     imagem_rgb = imagem,
     height_real = 4,
@@ -286,11 +311,11 @@ saida = convolve_rgb(
     kernel_r = kernel_r,
     kernel_g = kernel_g,
     kernel_b = kernel_b,
-    kernel_h = 2,
-    kernel_w = 2,
-    pad_top = 0,
+    kernel_h = 3,
+    kernel_w = 3,
+    pad_top = 1,
     pad_bottom = 1,
-    pad_left = 0,
+    pad_left = 1,
     pad_right = 1,
     stride_h = 1,
     stride_w = 1
@@ -307,3 +332,9 @@ for linha in saida:
 #    687, 532, 398, 262,
 #    207, 144, 85, 28
 #]
+
+#resultado 3x3
+#[940, 1660, 2054, 1475]
+#[1863, 2730, 2716, 1639]
+#[1719, 2211, 1936, 1004]
+#[782, 1087, 810, 398]

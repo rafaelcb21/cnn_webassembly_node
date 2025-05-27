@@ -3,8 +3,7 @@ const fs = require('fs');
 let currentInstance;
 
 (async () => {
-    //const wasmBuffer = fs.readFileSync("grayscale_2x2.wasm"); // Nome do seu WASM novo
-    const wasmBuffer = fs.readFileSync("./convolution/rgb565_3x3.wasm"); // Nome do seu WASM novo
+    const wasmBuffer = fs.readFileSync("rgb565_3x3.wasm");
     const wasmModule = await WebAssembly.instantiate(wasmBuffer, {
         env: {
             log: (value) => console.log("LOG:", value),
@@ -75,5 +74,45 @@ let currentInstance;
     );
 
     const decimalDump = Array.from(memory); // já retorna os valores decimais
-    fs.writeFileSync('./convolution/memory_bytes_decimal_3x3_rgb565.json', JSON.stringify(decimalDump, null, 2));
+    fs.writeFileSync('./memory_bytes_decimal.json', JSON.stringify(decimalDump, null, 2));
+
+    // Carrega o conteúdo do JSON salvo anteriormente
+        const memoryBytes = JSON.parse(fs.readFileSync('./memory_bytes_decimal.json', 'utf-8'));
+    
+        // Define o intervalo desejado
+        const start = 32;
+        const end = 96; // índice 95 incluído (inclusive)
+    
+        // Extrai os bytes do intervalo
+        const selectedBytes = memoryBytes.slice(start, end);
+    
+        // Processa de 4 em 4 bytes
+        const results = [];
+        for (let i = 0; i < selectedBytes.length; i += 4) {
+            // Pega os 4 bytes e inverte a ordem (little endian → big endian)
+            const group = selectedBytes.slice(i, i + 4).reverse();
+    
+            // Converte os 4 bytes para um único número de 32 bits (signed)
+            const value =
+                (group[0] << 24) |
+                (group[1] << 16) |
+                (group[2] << 8) |
+                (group[3] << 0);
+    
+            // Ajusta sinal (corrige para números negativos caso necessário)
+            const signedValue = value | 0;
+    
+            results.push(signedValue);
+        }
+    
+        // Mostra os valores convertidos
+        console.log("Resultados reconstruídos (int32):");
+        console.log(results);
 })();
+
+//[
+//    940, 1660, 2054, 1475,
+//   1863, 2730, 2716, 1639,
+//   1719, 2211, 1936, 1004,
+//    782, 1087,  810,  398
+//]

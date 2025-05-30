@@ -3,26 +3,10 @@
   ;; Export a linear memory of at least 1 page (64KiB)
   (memory (export "memory") 1)
 
-  ;; convolve function signature:
-  ;; (param $img i32)       – pointer to first element of input image (i32 array)
-  ;; (param $h i32)         – height of the real image
-  ;; (param $w i32)         – width of the real image
-  ;; (param $pad_t i32)     – top padding
-  ;; (param $pad_b i32)     – bottom padding
-  ;; (param $pad_l i32)     – left padding
-  ;; (param $pad_r i32)     – right padding
-  ;; (param $stride_h i32)  – vertical stride
-  ;; (param $stride_w i32)  – horizontal stride
-  ;; (param $out i32)       – pointer to first element of output buffer (i32 array)
-
-  (func $convolve_grayscale_3x3
+  (func $convolve_grayscale_3x3_valid
     (param $img       i32)  ;; ptr para imagem
     (param $h         i32)
     (param $w         i32)
-    (param $pad_t     i32)
-    (param $pad_b     i32)
-    (param $pad_l     i32)
-    (param $pad_r     i32)
     (param $stride_h  i32)
     (param $stride_w  i32)
     (param $out       i32)  ;; ptr de saída
@@ -38,7 +22,6 @@
     (param $k22_gray     i32)  ;; value of kernel by index 22
 
     (local $out_h     i32) (local $out_w     i32)
-    (local $ht        i32) (local $wt        i32)
     (local $i_out     i32) (local $j_out     i32)
     (local $i         i32) (local $j         i32)
     (local $ki        i32) (local $kj        i32)
@@ -48,7 +31,6 @@
     (local $val       i32) (local $sum       i32)
     (local $idx_ker   i32)
     (local $peso_gray i32)
-    (local $r         i32)
     (local $kh_len    i32) ;; kernel heigth length, 3x3 = 9
     (local $kw_len    i32) ;; kernel width length,  3x3 = 9
 
@@ -58,24 +40,8 @@
     i32.const 3
     local.set $kw_len ;; define o tamanho da largura do kernel, 3x3 = 9
 
-    ;; ht = pad_t + h + pad_b
-    local.get $pad_t
+    ;; out_h = ((h - kh) / stride_h) + 1
     local.get $h
-    i32.add
-    local.get $pad_b
-    i32.add
-    local.set $ht
-
-    ;; wt = pad_l + w + pad_r
-    local.get $pad_l
-    local.get $w
-    i32.add
-    local.get $pad_r
-    i32.add
-    local.set $wt
-
-    ;; out_h = ((ht - kh) / stride_h) + 1
-    local.get $ht
     local.get $kh_len
     ;;i32.const 3  ;; alterar para 2 3 5 7 dependendo do tamanho do kernel
     i32.sub
@@ -85,8 +51,8 @@
     i32.add
     local.set $out_h
 
-    ;; out_w = ((wt - kw) / stride_w) + 1
-    local.get $wt
+    ;; out_w = ((w - kw) / stride_w) + 1
+    local.get $w
     local.get $kw_len
     ;;i32.const 3  ;; alterar para 2 3 5 7 dependendo do tamanho do kernel
     i32.sub
@@ -132,41 +98,10 @@
                 local.get $ki
                 i32.add
                 local.set $row
-
-                ;; skip if outside padded image vertically
-                ;; pad_top <= row < pad_top + height_real
-                ;; if (row < pad_t) → continue
+                
                 local.get $row
-                local.get $pad_t
-                i32.lt_s          ;; row < pad_t
-
-                (if
-                  (then
-                    local.get $ki
-                    i32.const 1
-                    i32.add
-                    local.tee $ki
-                    local.get $kh_len
-                    ;;i32.const 3  ;; alterar para 2 3 5 7 dependendo do tamanho do kernel
-                    i32.lt_s
-                    br_if $loop_ki ;; continue no loop se ainda houver linha de kernel
-                    br $break_ki   ;; senão, sai do loop vertical
-                  )
-                )
-
-                ;; if (row >= pad_t + h) → break
-                local.get $row
-                local.get $pad_t
-                local.get $h
-                i32.add
-                i32.ge_s          ;; row >= pad_t + h
-                br_if $break_ki
-
-                ;; compute row_img and row_base
-                local.get $row
-                local.get $pad_t
-                i32.sub
                 local.set $row_img
+
                 local.get $row_img
                 local.get $w
                 i32.mul
@@ -183,38 +118,10 @@
                     i32.add
                     local.set $col
 
-                    ;; if (col < pad_l) → continue
+                    ;; compute col_img and idx (sem padding)
                     local.get $col
-                    local.get $pad_l
-                    i32.lt_s
-
-                    (if
-                      (then
-                        local.get $kj
-                        i32.const 1
-                        i32.add
-                        local.tee $kj
-                        local.get $kw_len
-                        ;;i32.const 3  ;; alterar para 2 3 5 7 dependendo do tamanho do kernel
-                        i32.lt_s
-                        br_if $loop_kj
-                        br $break_kj 
-                      )
-                    )
-
-                    ;; if (col >= pad_l + w) → break
-                    local.get $col
-                    local.get $pad_l
-                    local.get $w
-                    i32.add
-                    i32.ge_s
-                    br_if $break_kj
-
-                    ;; compute col_img and idx
-                    local.get $col
-                    local.get $pad_l
-                    i32.sub
                     local.set $col_img
+
                     local.get $row_base
                     local.get $col_img
                     i32.add
@@ -224,11 +131,9 @@
                     ;; endereço = base_img + idx*2
                     local.get $img
                     local.get $idx
-                    i32.const 1
-                    i32.mul
                     i32.add
                     ;; carrega 1 bytes e faz zero-extend
-                    i32.load8_s
+                    i32.load8_u
                     local.set $val  ;; aqui $val contém o valor GRAYSCALE completo (você pode extrair R/G/B depois)
 
                     ;; ki * kernel_w + kj
@@ -378,5 +283,5 @@
     end
   )
   ;; Export the function so it can be called from outside
-  (export "convolve_grayscale_3x3" (func $convolve_grayscale_3x3))
+  (export "convolve_grayscale_3x3_valid" (func $convolve_grayscale_3x3_valid))
 )

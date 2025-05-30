@@ -3,7 +3,7 @@ const fs = require('fs');
 let currentInstance;
 
 (async () => {
-    const wasmBuffer = fs.readFileSync("grayscale_3x3.wasm");
+    const wasmBuffer = fs.readFileSync("grayscale_3x3_same.wasm");
     const wasmModule = await WebAssembly.instantiate(wasmBuffer, {
         env: {
             log: (value) => console.log("LOG:", value),
@@ -22,7 +22,7 @@ let currentInstance;
         15, 11,  7,  3
     ], 0);
 
-    x = currentInstance.exports.convolve_grayscale_3x3(
+    x = currentInstance.exports.convolve_grayscale_3x3_same(
         0,   // ptr para imagem
         4,   // height da imagem
         4,   // width da imagem

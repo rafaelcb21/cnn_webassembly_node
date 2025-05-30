@@ -3,7 +3,7 @@ const fs = require('fs');
 let currentInstance;
 
 (async () => {
-    const wasmBuffer = fs.readFileSync("rgb565_3x3.wasm");
+    const wasmBuffer = fs.readFileSync("rgb565_3x3_valid.wasm");
     const wasmModule = await WebAssembly.instantiate(wasmBuffer, {
         env: {
             log: (value) => console.log("LOG:", value),
@@ -30,14 +30,10 @@ let currentInstance;
         offset += 2;
     }
 
-    x = currentInstance.exports.convolve_rgb565_3x3(
+    x = currentInstance.exports.convolve_rgb565_3x3_valid(
         0,   // ptr para imagem
         4,   // height da imagem
         4,   // width da imagem
-        1,   // padding top
-        1,   // padding bottom
-        1,   // padding left
-        1,   // padding right
         1,   // heigth do stride
         1,   // width do stride
         32,  // ponteiro de saida do resultado apos a convolução
@@ -79,9 +75,19 @@ let currentInstance;
     // Carrega o conteúdo do JSON salvo anteriormente
         const memoryBytes = JSON.parse(fs.readFileSync('./memory_bytes_decimal.json', 'utf-8'));
     
+        const height   = 4;
+        const width    = 4;
+        const kernel_h = 3;
+        const kernel_w = 3;
+        const stride_h = 1;
+        const stride_w = 1;
+
+        out_h = Math.floor((height  - kernel_h) / stride_h) + 1;
+        out_w = Math.floor((width   - kernel_w) / stride_w) + 1;
+
         // Define o intervalo desejado
         const start = 32;
-        const end = 96; // índice 95 incluído (inclusive)
+        const end = start + out_h * out_w * 4;
     
         // Extrai os bytes do intervalo
         const selectedBytes = memoryBytes.slice(start, end);
@@ -110,9 +116,4 @@ let currentInstance;
         console.log(results);
 })();
 
-//[
-//    940, 1660, 2054, 1475,
-//   1863, 2730, 2716, 1639,
-//   1719, 2211, 1936, 1004,
-//    782, 1087,  810,  398
-//]
+// [ 464, 472, 365, 292 ]

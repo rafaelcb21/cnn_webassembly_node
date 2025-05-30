@@ -22,12 +22,15 @@ let currentInstance;
         15, 11,  7,  3
     ], 0);
 
+    const stride_h = 2;
+    const stride_w = 1;
+
     x = currentInstance.exports.convolve_grayscale_1x1(
         0,   // ptr para imagem
         4,   // height da imagem
         4,   // width da imagem
-        1,   // heigth do stride
-        1,   // width do stride
+        stride_h,   // heigth do stride
+        stride_w,   // width do stride
         16,  // ponteiro de saida do resultado apos a convolução
         2,   // kernel indice 00 grayscale
     );
@@ -38,9 +41,15 @@ let currentInstance;
     // Carrega o conteúdo do JSON salvo anteriormente
     const memoryBytes = JSON.parse(fs.readFileSync('./memory_bytes_decimal.json', 'utf-8'));
 
+    const height   = 4;
+    const width    = 4;
+
+    const out_h = Math.floor((height  + stride_h - 1) / stride_h);
+    const out_w = Math.floor((width   + stride_w - 1) / stride_w);
+
     // Define o intervalo desejado
     const start = 16;
-    const end = 80; // índice 79 incluído (inclusive)
+    const end = start + out_h * out_w * 4;
 
     // Extrai os bytes do intervalo
     const selectedBytes = memoryBytes.slice(start, end);
@@ -69,9 +78,25 @@ let currentInstance;
     console.log(results);
 })();
 
+// 1x1
 //[
 //    2, 10, 16, 24, 
 //    32, 40, 46, 54, 
 //    62, 52, 44, 36,
 //    30, 22, 14,  6
 // ]
+
+// 2x2
+//[ 2, 16, 62, 44 ]
+
+// 1x2
+//[
+//    2, 16, 32, 46,
+//   62, 44, 30, 14
+//]
+
+// 2x1
+//[
+//    2, 10, 16, 24,
+//   62, 52, 44, 36
+//]

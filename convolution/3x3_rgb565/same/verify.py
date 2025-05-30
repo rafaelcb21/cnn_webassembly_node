@@ -82,7 +82,7 @@ saida = convolve_rgb(
     pad_bottom = 1,
     pad_left = 1,
     pad_right = 1,
-    stride_h = 1,
+    stride_h = 2,
     stride_w = 1
 )
 
@@ -91,8 +91,22 @@ print("Resultado final da convolução RGB somada:")
 for linha in saida:
     print(linha)
 
-#resultado 3x3
+#1x1
 #[940, 1660, 2054, 1475]
 #[1863, 2730, 2716, 1639]
 #[1719, 2211, 1936, 1004]
 #[782, 1087, 810, 398]
+
+#2x2
+#[940, 2054]
+#[1719, 1936]
+
+#1x2
+#[940, 2054]
+#[1863, 2716]
+#[1719, 1936]
+#[782, 810]
+
+#2x1
+#[940, 1660, 2054, 1475]
+#[1719, 2211, 1936, 1004]

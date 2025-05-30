@@ -53,7 +53,7 @@ saida = convolve_rgb_valid(
     kernel_b = kernel_b,
     kernel_h = 3,
     kernel_w = 3,
-    stride_h = 1,
+    stride_h = 2,
     stride_w = 1
 )
 
@@ -62,5 +62,16 @@ print("Resultado final da convolução RGB somada:")
 for linha in saida:
     print(linha)
 
+#1x1
 #[2730, 2716]
 #[2211, 1936]
+
+#2x2
+#[2730]
+
+#1x2
+#[2730]
+#[2211]
+
+#2x1
+#[2730, 2716]

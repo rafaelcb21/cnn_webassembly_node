@@ -86,7 +86,7 @@ saida = convolve_apply_kernel(
     pad_bottom = 1,
     pad_left = 1,
     pad_right = 1,
-    stride_h = 1,
+    stride_h = 2,
     stride_w = 1
 )
 
@@ -95,7 +95,23 @@ print("Resultado final da convolução:")
 for linha in saida:
     print(linha)
 
+#1x1
 #[90, 215, 286, 213]
 #[282, 464, 472, 218]
 #[292, 365, 292, 55]
 #[50, 99, 53, -12]
+
+#2x2
+#[90, 286]
+#[292, 292]
+
+#1x2
+#[90, 286]
+#[282, 472]
+#[292, 292]
+#[50, 53]
+
+#2x1
+#[90, 215, 286, 213]
+#[292, 365, 292, 55]
+

@@ -30,12 +30,15 @@ let currentInstance;
         offset += 2;
     }
 
+    const stride_h = 2;
+    const stride_w = 1;
+
     x = currentInstance.exports.convolve_rgb565_3x3_valid(
         0,   // ptr para imagem
         4,   // height da imagem
         4,   // width da imagem
-        1,   // heigth do stride
-        1,   // width do stride
+        stride_h,   // heigth do stride
+        stride_w,   // width do stride
         32,  // ponteiro de saida do resultado apos a convolução
 
         2,   // kernel indice 00 RED
@@ -79,8 +82,6 @@ let currentInstance;
         const width    = 4;
         const kernel_h = 3;
         const kernel_w = 3;
-        const stride_h = 1;
-        const stride_w = 1;
 
         out_h = Math.floor((height  - kernel_h) / stride_h) + 1;
         out_w = Math.floor((width   - kernel_w) / stride_w) + 1;
@@ -116,4 +117,14 @@ let currentInstance;
         console.log(results);
 })();
 
-// [ 464, 472, 365, 292 ]
+//1x1 hxw
+//[ 2730, 2716, 2211, 1936 ]
+
+//2x2
+//[ 2730 ]
+
+//1x2
+//[ 2730, 2211 ]
+
+//2x1
+//[ 2730, 2716 ]

@@ -3,7 +3,7 @@ const fs = require('fs');
 let currentInstance;
 
 (async () => {
-    const wasmBuffer = fs.readFileSync("rgb565_3x3_same_first_layer.wasm");
+    const wasmBuffer = fs.readFileSync("rgb565_3x3_valid_first_layer.wasm");
     const wasmModule = await WebAssembly.instantiate(wasmBuffer, {
         env: {
             log: (value) => console.log("LOG:", value),
@@ -33,14 +33,10 @@ let currentInstance;
     const stride_h = 1;
     const stride_w = 1;
 
-    x = currentInstance.exports.convolve_rgb565_3x3_same_first_layer(
+    x = currentInstance.exports.convolve_rgb565_3x3_valid_first_layer(
         0,   // ptr para imagem
         4,   // height da imagem
         4,   // width da imagem
-        1,   // padding top
-        1,   // padding bottom
-        1,   // padding left
-        1,   // padding right
         stride_h,   // heigth do stride
         stride_w,   // width do stride
         32,  // ponteiro de saida do resultado apos a convolução
@@ -84,10 +80,12 @@ let currentInstance;
     
         const height   = 4;
         const width    = 4;
+        const kernel_h = 3;
+        const kernel_w = 3;
 
-        // Fórmula de SAME
-        const out_h = Math.floor((height  + stride_h - 1) / stride_h);
-        const out_w = Math.floor((width   + stride_w - 1) / stride_w);
+        // Fórmula de VALID
+        const out_h = Math.floor((height - kernel_h) / stride_h) + 1; // → 2
+        const out_w = Math.floor((width  - kernel_w) / stride_w) + 1; // → 2
 
         // Define o intervalo desejado
         const start = 32;
@@ -117,45 +115,4 @@ let currentInstance;
 })();
 
 //1x1 hxw
-//[
-//    94,                166,
-//205.40000915527344,              147.5,
-//186.3000030517578,                273,
-//271.6000061035156, 163.90000915527344,
-//171.89999389648438, 221.10000610351562,
-//193.59999084472656, 100.39999389648438,
-//78.19999694824219, 108.70000457763672,
-//    81,  39.79999923706055
-//]
-
-//2x2
-//[
-//  6.753417818967023e-41,
-//  1.0875695182124946e+24,
-//  5.434711644569942e+23,
-//  -1.584618821336371e-23
-//]
-
-//1x2
-//[
-//  6.753417818967023e-41,
-//  1.0875695182124946e+24,
-//  -214148144,
-//  -428927072,
-//  5.434711644569942e+23,
-//  -1.584618821336371e-23,
-//  2.722566847341809e+23,
-//  5.820713561112425e-41
-//]
-
-//2x1
-//[
-//  6.753417818967023e-41,
-//  1.3725718458061583e-41,
-//  1.0875695182124946e+24,
-//  1.176185331095046e-38,
-//  5.434711644569942e+23,
-//  -3.1714994646601915e-23,
-//  -1.584618821336371e-23,
-//  -107364880
-//]
+// [ 273, 271.6000061035156, 221.10000610351562, 193.59999084472656 ]

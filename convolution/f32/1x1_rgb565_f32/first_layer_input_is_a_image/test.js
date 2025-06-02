@@ -3,7 +3,7 @@ const fs = require('fs');
 let currentInstance;
 
 (async () => {
-    const wasmBuffer = fs.readFileSync("rgb565_1x1.wasm");
+    const wasmBuffer = fs.readFileSync("rgb565_1x1_first_layer.wasm");
     const wasmModule = await WebAssembly.instantiate(wasmBuffer, {
         env: {
             log: (value) => console.log("LOG:", value),
@@ -30,19 +30,19 @@ let currentInstance;
         offset += 2;
     }
 
-    const stride_h = 2;
+    const stride_h = 1;
     const stride_w = 1;
 
-    x = currentInstance.exports.convolve_rgb565_1x1(
+    x = currentInstance.exports.convolve_rgb565_1x1_first_layer(
         0,   // ptr para imagem
         4,   // height da imagem
         4,   // width da imagem
         stride_h,   // heigth do stride
         stride_w,   // width do stride
         32,  // ponteiro de saida do resultado apos a convolução
-        2,   // kernel indice 00 RED
-        3,   // kernel indice 00 GREEN
-        4    // kernel indice 00 BLUE
+        0.2,   // kernel indice 00 RED
+        0.3,   // kernel indice 00 GREEN
+        0.4    // kernel indice 00 BLUE
     );
 
     const decimalDump = Array.from(memory); // já retorna os valores decimais
@@ -65,48 +65,33 @@ let currentInstance;
     const selectedBytes = memoryBytes.slice(start, end);
 
     // Processa de 4 em 4 bytes
-    const results = [];
+    const floatResults = [];
     for (let i = 0; i < selectedBytes.length; i += 4) {
         // Pega os 4 bytes e inverte a ordem (little endian → big endian)
-        const group = selectedBytes.slice(i, i + 4).reverse();
+        const group = selectedBytes.slice(i, i + 4);
 
-        // Converte os 4 bytes para um único número de 32 bits (signed)
-        const value =
-            (group[0] << 24) |
-            (group[1] << 16) |
-            (group[2] << 8) |
-            (group[3] << 0);
+        const buffer = new ArrayBuffer(4)
+        const view = new DataView(buffer)
+        group.forEach((byte, idx) => view.setUint8(idx, byte));
 
-        // Ajusta sinal (corrige para números negativos caso necessário)
-        const signedValue = value | 0;
+        const floatValue = view.getFloat32(0, true)
+        floatResults.push(floatValue)
 
-        results.push(signedValue);
     }
-
+    
     // Mostra os valores convertidos
-    console.log("Resultados reconstruídos (int32):");
-    console.log(results);
+    console.log("Resultados reconstruídos (f32):");
+    console.log(floatResults);
 })();
 
 // 1x1 hxw
 //[
-//    29,  74, 120, 165, 209,
-//   254, 300, 345, 354, 294,
-//   250, 205, 159, 114,  70,
-//    25
-//]
-
-// 2x2
-//[ 29, 120, 354, 250 ]
-
-// 1x2
-//[
-//    29, 120, 209, 300,
-//   354, 250, 159,  70
-//]
-//
-// 2x1
-//[
-//    29,  74, 120, 165,
-//   354, 294, 250, 205
+//    2.9000000953674316,   7.40000057220459,
+//                    12,               16.5,
+//    20.899999618530273, 25.400001525878906,
+//                    30,               34.5,
+//    35.400001525878906, 29.400001525878906,
+//                    25,               20.5,
+//     15.90000057220459, 11.399999618530273,
+//                     7,                2.5
 //]

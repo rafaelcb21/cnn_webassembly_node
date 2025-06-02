@@ -4,25 +4,25 @@
   (memory (export "memory") 1)
 
   ;; Convolution 1x1 over RGB565 image with customizable strides
-  (func $convolve_rgb565_1x1
+  (func $convolve_rgb565_1x1_first_layer
     (param $img       i32)  ;; input ptr (RGB565, 2 bytes/pixel)
     (param $h         i32)  ;; image height
     (param $w         i32)  ;; image width
     (param $stride_h  i32)  ;; vertical stride
     (param $stride_w  i32)  ;; horizontal stride
     (param $out       i32)  ;; output ptr (i32 per pixel)
-    (param $k_r       i32)  ;; kernel red weight
-    (param $k_g       i32)  ;; kernel green weight
-    (param $k_b       i32)  ;; kernel blue weight
-    (local $i        i32)
-    (local $j        i32)
-    (local $idx_img  i32)
-    (local $pix      i32)
-    (local $r        i32)
-    (local $g        i32)
-    (local $b        i32)
-    (local $sum      i32)
-    (local $out_ptr  i32)
+    (param $k_r       f32)  ;; kernel red weight
+    (param $k_g       f32)  ;; kernel green weight
+    (param $k_b       f32)  ;; kernel blue weight
+    (local $i         i32)
+    (local $j         i32)
+    (local $idx_img   i32)
+    (local $pix       i32)  ;; RGB565 pixel (16 bits)
+    (local $r         f32)
+    (local $g         f32)
+    (local $b         f32)
+    (local $sum       f32)
+    (local $out_ptr   i32)
 
     ;; initialize row index and output pointer
     i32.const 0
@@ -56,7 +56,7 @@
 
             ;; extract R, G, B
             local.get $pix
-            call $extract_rgb
+            call $extract_rgb_f32
             local.set $r
             local.set $g
             local.set $b
@@ -64,21 +64,21 @@
             ;; weighted sum
             local.get $r
             local.get $k_r
-            i32.mul
+            f32.mul
             local.get $g
             local.get $k_g
-            i32.mul
-            i32.add
+            f32.mul
+            f32.add
             local.get $b
             local.get $k_b
-            i32.mul
-            i32.add
+            f32.mul
+            f32.add
             local.set $sum
 
             ;; store at out_ptr and advance
             local.get $out_ptr
             local.get $sum
-            i32.store
+            f32.store
             local.get $out_ptr
             i32.const 4
             i32.add
@@ -107,10 +107,14 @@
   )
 
   ;; Extract R, G, B from a 16-bit RGB565 pixel
-  (func $extract_rgb (param $pixel_bytes_16bits i32) (result i32) (result i32) (result i32)
+  (func $extract_rgb_f32 (param $pixel_bytes_16bits i32) (result f32) (result f32) (result f32)
     (local $red i32)
     (local $green i32)
     (local $blue i32)
+
+    (local $red_f32 f32)
+    (local $green_f32 f32)
+    (local $blue_f32 f32)
 
     ;; o operador AND extrai e o OR junta
     ;; extrair o RED
@@ -155,12 +159,24 @@
     ;; Green
     ;; Blue
     local.get $blue
+    f32.convert_i32_u
+    local.set $blue_f32
+
     local.get $green
+    f32.convert_i32_u
+    local.set $green_f32
+
     local.get $red
+    f32.convert_i32_u
+    local.set $red_f32
+
+    local.get $blue_f32
+    local.get $green_f32
+    local.get $red_f32
   )
 
   ;; Export functions
-  (export "convolve_rgb565_1x1" (func $convolve_rgb565_1x1))
-  (export "extract_rgb"          (func $extract_rgb))
+  (export "convolve_rgb565_1x1_first_layer" (func $convolve_rgb565_1x1_first_layer))
+  (export "extract_rgb_f32"          (func $extract_rgb_f32))
 )
 
